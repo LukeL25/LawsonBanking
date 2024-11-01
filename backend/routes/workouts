@@ -2,8 +2,6 @@ const express = require('express')
 
 const router = express.Router()
 
-router.get('/', () => {})
-
 // TODO Change this to banking stuff once tutorial complete
 
 // GET all workouts
@@ -16,7 +14,7 @@ router.get('/:id', (req, res) => {
     res.json({mssg: 'GET a single workout'})
 })
 
-// POST a workout
+// POST a new workout
 router.post('/', (req, res) => {
     res.json({mssg: 'POST a new workout'})
 })
