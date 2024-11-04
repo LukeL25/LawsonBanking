@@ -6,6 +6,7 @@ const WorkoutForm = () => {
     const [title, setTitle] = useState('')
     const [load, setLoad] = useState('')
     const [reps, setReps] = useState('')
+    const [id, setId] = useState('')
     const [error, setError] = useState(null)
 
     const handleSubmit = async (e) => {
@@ -40,7 +41,7 @@ const WorkoutForm = () => {
 
         const workout = {title, load, reps}
 
-        const response = await fetch('/api/workouts' + '/67280c54063be4621cac5ea1', {
+        const response = await fetch('/api/workouts' + '/' + id, {
             method: 'PATCH',
             body: JSON.stringify(workout),
             headers: {
@@ -53,6 +54,10 @@ const WorkoutForm = () => {
             setError(json.error)
         }
         if (response.ok) {
+            setTitle('')
+            setLoad('')
+            setReps('')
+            setId('')
             setError(null)
             console.log('workout updated')
             dispatch({type: 'UPDATE_WORKOUT', payload: json})
@@ -82,6 +87,12 @@ const WorkoutForm = () => {
                 type="number"
                 onChange={(e) => setReps(e.target.value)}
                 value={reps}
+            />
+
+            <label>ID:</label>
+            <input
+                type="text"
+                onChange={(e) => setId(e.target.value)}
             />
 
             <button type="submit">Add Workout</button>
