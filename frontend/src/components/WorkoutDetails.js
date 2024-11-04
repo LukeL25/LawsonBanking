@@ -17,8 +17,8 @@ const WorkoutDetails = ({workout}) => {
     return (
         <div className="workout-details">
             <h4>{workout.title}</h4>
-            <p><strong>Load (kg): </strong>{workout.load}</p>
-            <p><strong>Reps: </strong>{workout.reps}</p>
+            <p><strong>Dollar Amount: </strong>{workout.load}</p>
+            <p><strong>Cents: </strong>{workout.reps}</p>
             <p><strong>Timestamp: </strong>{workout.createdAt}</p>
             <p><strong>Workout ID: </strong>{workout._id}</p>
             <span onClick={handleDelete}>delete</span>
