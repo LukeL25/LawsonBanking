@@ -9,6 +9,12 @@ const WorkoutForm = () => {
     const [id, setId] = useState('')
     const [error, setError] = useState(null)
 
+
+    const handleGenerateReport = () => {
+        console.log('Generating report...')
+        // Add report generation logic here
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
 
@@ -66,23 +72,23 @@ const WorkoutForm = () => {
 
     return (
         <form className="create" onSubmit={handleSubmit}>
-            <h3>Add a New Workout</h3>
+            <h3>Add a New Transaction</h3>
 
-            <label>Exercise Title:</label>
+            <label>Transaction Title:</label>
             <input
                 type="text"
                 onChange={(e) => setTitle(e.target.value)}
                 value={title}
             />
 
-            <label>Load (in kg):</label>
+            <label>Dollar Amount:</label>
             <input
                 type="number"
                 onChange={(e) => setLoad(e.target.value)}
                 value={load}
             />
 
-            <label>Reps:</label>
+            <label>Cents:</label>
             <input
                 type="number"
                 onChange={(e) => setReps(e.target.value)}
@@ -95,8 +101,9 @@ const WorkoutForm = () => {
                 onChange={(e) => setId(e.target.value)}
             />
 
-            <button type="submit">Add Workout</button>
-            <button type="button" onClick={handleEdit}>Edit Workout</button>
+            <button type="submit">Add Transaction</button>
+            <button type="button" onClick={handleEdit}>Edit Transaction</button>
+            <button type="button" onClick={handleGenerateReport}>Generate Report</button>
             {error && <div className="error">{error}</div>}
         </form>
     )
