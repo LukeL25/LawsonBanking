@@ -19,7 +19,8 @@ const WorkoutDetails = ({workout}) => {
             <h4>{workout.title}</h4>
             <p><strong>Load (kg): </strong>{workout.load}</p>
             <p><strong>Reps: </strong>{workout.reps}</p>
-            <p>{workout.createdAt}</p>
+            <p><strong>Timestamp: </strong>{workout.createdAt}</p>
+            <p><strong>Workout ID: </strong>{workout._id}</p>
             <span onClick={handleDelete}>delete</span>
         </div>
     )

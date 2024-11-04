@@ -6,6 +6,7 @@ const WorkoutForm = () => {
     const [title, setTitle] = useState('')
     const [load, setLoad] = useState('')
     const [reps, setReps] = useState('')
+    const [id, setId] = useState('')
     const [error, setError] = useState(null)
 
     const handleSubmit = async (e) => {
@@ -35,8 +36,36 @@ const WorkoutForm = () => {
         }
     }
 
+    const handleEdit = async (e) => {
+        e.preventDefault()
+
+        const workout = {title, load, reps}
+
+        const response = await fetch('/api/workouts' + '/' + id, {
+            method: 'PATCH',
+            body: JSON.stringify(workout),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        const json = await response.json()
+
+        if (!response.ok) {
+            setError(json.error)
+        }
+        if (response.ok) {
+            setTitle('')
+            setLoad('')
+            setReps('')
+            setId('')
+            setError(null)
+            console.log('workout updated')
+            dispatch({type: 'UPDATE_WORKOUT', payload: json})
+        }
+    }
+
     return (
-        <form className = "create" onSubmit={handleSubmit}>
+        <form className="create" onSubmit={handleSubmit}>
             <h3>Add a New Workout</h3>
 
             <label>Exercise Title:</label>
@@ -60,7 +89,14 @@ const WorkoutForm = () => {
                 value={reps}
             />
 
-            <button>Add Workout</button>
+            <label>ID:</label>
+            <input
+                type="text"
+                onChange={(e) => setId(e.target.value)}
+            />
+
+            <button type="submit">Add Workout</button>
+            <button type="button" onClick={handleEdit}>Edit Workout</button>
             {error && <div className="error">{error}</div>}
         </form>
     )
