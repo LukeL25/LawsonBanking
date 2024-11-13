@@ -8,7 +8,8 @@ const WorkoutForm = () => {
     const [reps, setReps] = useState('');
     const [id, setId] = useState('');
     const [error, setError] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const handleGenerateReport = () => {
         console.log('Generating report...');
@@ -36,7 +37,7 @@ const WorkoutForm = () => {
             setLoad('');
             setReps('');
             setError(null);
-            setIsModalOpen(false);
+            setIsAddModalOpen(false);
             console.log('new workout added');
             dispatch({ type: 'CREATE_WORKOUT', payload: json });
         }
@@ -65,21 +66,25 @@ const WorkoutForm = () => {
             setReps('');
             setId('');
             setError(null);
+            setIsEditModalOpen(false);
             console.log('workout updated');
             dispatch({ type: 'UPDATE_WORKOUT', payload: json });
         }
     };
 
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+    const openAddModal = () => setIsAddModalOpen(true);
+    const closeAddModal = () => setIsAddModalOpen(false);
+
+    const openEditModal = () => setIsEditModalOpen(true);
+    const closeEditModal = () => setIsEditModalOpen(false);
 
     return (
         <div className="form-container">
             <div className="button-group-vertical">
-                <button className="action-button" type="button" onClick={openModal}>
+                <button className="action-button" type="button" onClick={openAddModal}>
                     Add Transaction
                 </button>
-                <button className="action-button" type="button" onClick={handleEdit}>
+                <button className="action-button" type="button" onClick={openEditModal}>
                     Edit Transaction
                 </button>
                 <button className="action-button" type="button" onClick={handleGenerateReport}>
@@ -87,7 +92,8 @@ const WorkoutForm = () => {
                 </button>
             </div>
 
-            {isModalOpen && (
+            {/* Add Transaction Modal */}
+            {isAddModalOpen && (
                 <div className="modal">
                     <div className="modal-content">
                         <h3>Add a New Transaction</h3>
@@ -116,7 +122,51 @@ const WorkoutForm = () => {
                         <button type="button" onClick={handleSubmit}>
                             Submit
                         </button>
-                        <button type="button" onClick={closeModal}>
+                        <button type="button" onClick={closeAddModal}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Transaction Modal */}
+            {isEditModalOpen && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <h3>Edit Transaction</h3>
+
+                        <label>Transaction ID:</label>
+                        <input
+                            type="text"
+                            onChange={(e) => setId(e.target.value)}
+                            value={id}
+                        />
+
+                        <label>Transaction Title:</label>
+                        <input
+                            type="text"
+                            onChange={(e) => setTitle(e.target.value)}
+                            value={title}
+                        />
+
+                        <label>Dollar Amount:</label>
+                        <input
+                            type="number"
+                            onChange={(e) => setLoad(e.target.value)}
+                            value={load}
+                        />
+
+                        <label>Cents:</label>
+                        <input
+                            type="number"
+                            onChange={(e) => setReps(e.target.value)}
+                            value={reps}
+                        />
+
+                        <button type="button" onClick={handleEdit}>
+                            Submit
+                        </button>
+                        <button type="button" onClick={closeEditModal}>
                             Cancel
                         </button>
                     </div>
