@@ -109,11 +109,53 @@ const updateAccount = async (req, res) => {
     res.status(200).json(account)
 }
 
+// update/create new user transaction
+const updateTransactions = async (req, res) => {
+    const { id } = req.params;
+    const { transactions } = req.body;
+
+    try {
+        // Fetch the current user document
+        const user = await Banking.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Calculate the new balance based on the incoming transactions
+        let newBalance = user.balance;
+        transactions.forEach(transaction => {
+            if (transaction.transType === 'debit') {
+                newBalance -= transaction.amount;
+            } else if (transaction.transType === 'credit') {
+                newBalance += transaction.amount;
+            }
+        });
+
+        // Append the new transactions and update the balance
+        const updatedUser = await Banking.findByIdAndUpdate(
+            id,
+            {
+                $push: { transactions: { $each: transactions } },
+                $set: { balance: newBalance }
+            },
+            { new: true } // Return the updated document
+        );
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+
+
 
 module.exports = {
     getAccounts,
     getAccount,
     createAccount,
     deleteAccount,
-    updateAccount
+    updateAccount,
+    updateTransactions
 }
