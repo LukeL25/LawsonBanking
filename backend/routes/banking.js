@@ -5,7 +5,8 @@ const {
     getAccount,
     deleteAccount,
     updateAccount,
-    updateTransactions
+    updateTransactions,
+    deleteTransaction
 } = require('../controllers/bankingController')
 
 const router = express.Router()
@@ -27,5 +28,9 @@ router.patch('/:id', updateAccount)
 
 // POST a new transaction
 router.put('/:id', updateTransactions)
+
+// Delete a transaction
+router.delete('/:userId/transactions/:transactionId', deleteTransaction);
+
 
 module.exports = router

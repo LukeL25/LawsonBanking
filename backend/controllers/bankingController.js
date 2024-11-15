@@ -148,6 +148,46 @@ const updateTransactions = async (req, res) => {
     }
 };
 
+// Deletes a transaction
+const deleteTransaction = async (req, res) => {
+    const { userId, transactionId } = req.params;
+
+    try {
+        // Fetch the user document first
+        const user = await Banking.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Find the transaction to delete
+        const transaction = user.transactions.find(
+            (trans) => trans._id.toString() === transactionId
+        );
+
+        if (!transaction) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        // Calculate the new balance
+        const newBalance = user.balance - transaction.amount;
+
+        // Remove the transaction using $pull
+        const updatedUser = await Banking.findByIdAndUpdate(
+            userId,
+            {
+                $pull: { transactions: { _id: transactionId } },
+                $set: { balance: newBalance },
+            },
+            { new: true }
+        );
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
 
 
 
@@ -157,5 +197,6 @@ module.exports = {
     createAccount,
     deleteAccount,
     updateAccount,
-    updateTransactions
+    updateTransactions,
+    deleteTransaction
 }
