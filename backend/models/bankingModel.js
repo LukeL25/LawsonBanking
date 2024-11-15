@@ -8,11 +8,6 @@ const Schema = mongoose.Schema
 
 // Schema for each user account 
 const userSchema = new Schema({
-    userId: {
-        type: String,
-        required: true
-
-    },
     name: {
         type: String,
         required: true
@@ -21,7 +16,7 @@ const userSchema = new Schema({
         type: Number,
         required: true
     },
-    transaction: {
+    transactions: {
         type: [transactionSchema],
         required: false
     }
@@ -29,15 +24,15 @@ const userSchema = new Schema({
 
 // Schema for each transaction
 const transactionSchema = new Schema({
-    transactionId: {
+    transName: {
         type: String,
-        required: true
+        required: true,
     },
     amount: {
         type: Number,
         required: true
     },
-    transactionType: {
+    transType: {
         type: String,
         required: true
     }
