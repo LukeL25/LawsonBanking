@@ -6,22 +6,6 @@ const Schema = mongoose.Schema
 // may just come with in mongodb
 
 
-// Schema for each user account 
-const userSchema = new Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    balance: {
-        type: Number,
-        required: true
-    },
-    transactions: {
-        type: [transactionSchema],
-        required: false
-    }
-}, { timestamps: true })
-
 // Schema for each transaction
 const transactionSchema = new Schema({
     transName: {
@@ -38,4 +22,20 @@ const transactionSchema = new Schema({
     }
 }, { timestamps: true })
 
-module.exports = mongoose.model('Banking', bankingSchema)
+// Schema for each user account 
+const userSchema = new Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    balance: {
+        type: Number,
+        required: true
+    },
+    transactions: {
+        type: [transactionSchema],
+        required: false
+    }
+}, { timestamps: true })
+
+module.exports = mongoose.model('Banking', userSchema)

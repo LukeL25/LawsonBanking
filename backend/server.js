@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
 const workoutRoutes = require('./routes/workouts.js')
+const bankingRoutes = require('./routes/banking.js')
 
 // express app
 const app = express()
@@ -17,7 +18,8 @@ app.use((req, res, next) => {
 
 // routes
 // TODO Change this to banking stuff once complete
-app.use('/api/workouts', workoutRoutes)
+//app.use('/api/workouts', workoutRoutes)
+app.use('/api/banking', bankingRoutes)
 
 // connect to db
 mongoose.connect(process.env.MONGO_URI)
