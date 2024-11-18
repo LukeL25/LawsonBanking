@@ -10,13 +10,39 @@ const UserAccount = () => {
     // Fetch user data from the API
     const fetchUserData = async () => {
         try {
-            console.log("here!")
             const response = await axios.get(`http://localhost:4000/api/banking/${userId}`);
-            console.log(response.data)
             setUserData(response.data);
             setTransactions(response.data.transactions);
         } catch (error) {
             console.error('Error fetching user data:', error);
+        }
+    };
+
+    // Recalculate the balance based on remaining transactions
+    const recalculateBalance = (updatedTransactions) => {
+        const newBalance = updatedTransactions.reduce((acc, transaction) => {
+            return transaction.transType === 'credit'
+                ? acc + transaction.amount
+                : acc - transaction.amount;
+        }, 0);
+        return newBalance;
+    };
+
+    // Delete a transaction
+    const deleteTransaction = async (transactionId) => {
+        try {
+            await axios.delete(`http://localhost:4000/api/banking/${userId}/transactions/${transactionId}`);
+            // Filter out the deleted transaction
+            const updatedTransactions = transactions.filter((t) => t._id !== transactionId);
+
+            // Recalculate the balance
+            const newBalance = recalculateBalance(updatedTransactions);
+
+            // Update transactions and user data state
+            setTransactions(updatedTransactions);
+            setUserData({ ...userData, transactions: updatedTransactions, balance: newBalance });
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
         }
     };
 
@@ -28,7 +54,6 @@ const UserAccount = () => {
     // Fetch user data when the component loads
     useEffect(() => {
         fetchUserData();
-        console.log("here!")
     }, []);
 
     return (
@@ -54,6 +79,12 @@ const UserAccount = () => {
                                             <p><strong>Description:</strong> {transaction.transDescription}</p>
                                             <p><strong>Amount:</strong> ${transaction.amount}</p>
                                             <p><strong>Type:</strong> {transaction.transType}</p>
+                                            <button
+                                                className="button delete-button"
+                                                onClick={() => deleteTransaction(transaction._id)}
+                                            >
+                                                Delete
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
