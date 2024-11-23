@@ -22,15 +22,15 @@ const UserAccount = () => {
 
     // Recalculate the balance based on transactions
     const recalculateBalance = (updatedTransactions) => {
-        var newBalance = 0;
-        transactions.forEach(transaction => {
+        let newBalance = 0;
+        updatedTransactions.forEach(transaction => {
             if (transaction.transType === 'debit') {
                 newBalance -= transaction.amount;
             } else if (transaction.transType === 'credit') {
                 newBalance += transaction.amount;
             }
         });
-        setUserData({...userData, balance: newBalance})
+        return newBalance;
     };
 
     // Delete a transaction
@@ -49,31 +49,24 @@ const UserAccount = () => {
     // Add a new transaction
     const addTransaction = async () => {
         try {
-            // Create the new transaction object
-            const updatedTransactions = [newTransaction];
-    
-            // Prepare the payload with only the transactions field
+            // Prepare the payload with the new transaction
             const payload = {
-                transactions: updatedTransactions,
+                transactions: [newTransaction],
             };
-    
+
             // Send PUT request to update the transactions field of the user account
             const response = await axios.put(`http://localhost:4000/api/banking/${userId}`, payload);
-    
-            // Use the response data to update the frontend state
-            setUserData((prevData) => ({
-                ...prevData,
-                transactions: response.data.transactions,
-                balance: recalculateBalance(response.data.transactions),
-            }));
-            setTransactions(response.data.transactions);
+            const updatedTransactions = response.data.transactions;
+
+            // Calculate the new balance and update state
+            const newBalance = recalculateBalance(updatedTransactions);
+            setTransactions(updatedTransactions);
+            setUserData({ ...userData, transactions: updatedTransactions, balance: newBalance });
             setAddModalOpen(false); // Close the add transaction modal
         } catch (error) {
-            console.error('Error updating transactions:', error);
+            console.error('Error adding transaction:', error);
         }
     };
-    
-    
 
     // Toggle modal visibility
     const toggleModal = () => {
@@ -105,7 +98,7 @@ const UserAccount = () => {
                 <>
                     <h2>User Account Information</h2>
                     <p><strong>Name:</strong> {userData.name}</p>
-                    <p><strong>Balance:</strong> ${userData.balance}</p>
+                    <p><strong>Balance:</strong> ${userData.balance.toFixed(2)}</p>
 
                     <button className="button" onClick={toggleModal}>
                         Show Transactions
@@ -116,31 +109,30 @@ const UserAccount = () => {
 
                     {/* Modal for displaying transactions */}
                     {isModalOpen && (
-                    <div className="modal">
-                        <div className="modal-content">
-                            <h3>User Transactions</h3>
-                            <div className="transactions-list-container">
-                                <ul>
-                                    {transactions.map((transaction) => (
-                                        <li key={transaction._id}>
-                                            <p><strong>Description:</strong> {transaction.transName}</p>
-                                            <p><strong>Amount:</strong> ${transaction.amount}</p>
-                                            <p><strong>Type:</strong> {transaction.transType}</p>
-                                            <button
-                                                className="button delete-button"
-                                                onClick={() => deleteTransaction(transaction._id)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>User Transactions</h3>
+                                <div className="transactions-list-container">
+                                    <ul>
+                                        {transactions.map((transaction) => (
+                                            <li key={transaction._id}>
+                                                <p><strong>Description:</strong> {transaction.transName}</p>
+                                                <p><strong>Amount:</strong> ${transaction.amount.toFixed(2)}</p>
+                                                <p><strong>Type:</strong> {transaction.transType}</p>
+                                                <button
+                                                    className="button delete-button"
+                                                    onClick={() => deleteTransaction(transaction._id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <button className="button" onClick={toggleModal}>Close</button>
                             </div>
-                            <button className="button" onClick={toggleModal}>Close</button>
                         </div>
-                    </div>
-                )}
-
+                    )}
 
                     {/* Modal for adding a new transaction */}
                     {isAddModalOpen && (
@@ -152,8 +144,8 @@ const UserAccount = () => {
                                         <label>Description:</label>
                                         <input
                                             type="text"
-                                            name="transName"
-                                            value={newTransaction.transName}
+                                            name="transDescription"
+                                            value={newTransaction.transDescription}
                                             onChange={handleInputChange}
                                         />
                                     </div>
