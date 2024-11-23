@@ -5,6 +5,8 @@ const UserAccount = () => {
     const [userData, setUserData] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [isModalOpen, setModalOpen] = useState(false);
+    const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
     const userId = '673756e623a73f19355bacf5'; // Example user ID
 
     // Fetch user data from the API
@@ -18,27 +20,25 @@ const UserAccount = () => {
         }
     };
 
-    // Recalculate the balance based on remaining transactions
+    // Recalculate the balance based on transactions
     const recalculateBalance = (updatedTransactions) => {
-        const newBalance = updatedTransactions.reduce((acc, transaction) => {
-            return transaction.transType === 'credit'
-                ? acc + transaction.amount
-                : acc - transaction.amount;
-        }, 0);
-        return newBalance;
+        var newBalance = 0;
+        transactions.forEach(transaction => {
+            if (transaction.transType === 'debit') {
+                newBalance -= transaction.amount;
+            } else if (transaction.transType === 'credit') {
+                newBalance += transaction.amount;
+            }
+        });
+        setUserData({...userData, balance: newBalance})
     };
 
     // Delete a transaction
     const deleteTransaction = async (transactionId) => {
         try {
             await axios.delete(`http://localhost:4000/api/banking/${userId}/transactions/${transactionId}`);
-            // Filter out the deleted transaction
             const updatedTransactions = transactions.filter((t) => t._id !== transactionId);
-
-            // Recalculate the balance
             const newBalance = recalculateBalance(updatedTransactions);
-
-            // Update transactions and user data state
             setTransactions(updatedTransactions);
             setUserData({ ...userData, transactions: updatedTransactions, balance: newBalance });
         } catch (error) {
@@ -46,9 +46,54 @@ const UserAccount = () => {
         }
     };
 
+    // Add a new transaction
+    const addTransaction = async () => {
+        try {
+            // Create the new transaction object
+            const updatedTransactions = [newTransaction];
+
+            console.log(updatedTransactions)
+    
+            // Prepare the payload with only the transactions field
+            const payload = {
+                transactions: updatedTransactions,
+            };
+    
+            // Send PUT request to update the transactions field of the user account
+            const response = await axios.put(`http://localhost:4000/api/banking/${userId}`, payload);
+    
+            // Use the response data to update the frontend state
+            setUserData((prevData) => ({
+                ...prevData,
+                transactions: response.data.transactions,
+                balance: recalculateBalance(response.data.transactions),
+            }));
+            setTransactions(response.data.transactions);
+            setAddModalOpen(false); // Close the add transaction modal
+        } catch (error) {
+            console.error('Error updating transactions:', error);
+        }
+    };
+    
+    
+
     // Toggle modal visibility
     const toggleModal = () => {
         setModalOpen(!isModalOpen);
+    };
+
+    // Toggle add transaction modal visibility
+    const toggleAddModal = () => {
+        setAddModalOpen(!isAddModalOpen);
+    };
+
+    // Handle input change for new transaction
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewTransaction({
+            ...newTransaction,
+            [name]: name === 'amount' ? parseFloat(value) : value,
+        });
     };
 
     // Fetch user data when the component loads
@@ -66,6 +111,9 @@ const UserAccount = () => {
 
                     <button className="button" onClick={toggleModal}>
                         Show Transactions
+                    </button>
+                    <button className="button" onClick={toggleAddModal}>
+                        Add Transaction
                     </button>
 
                     {/* Modal for displaying transactions */}
@@ -89,6 +137,52 @@ const UserAccount = () => {
                                     ))}
                                 </ul>
                                 <button className="button" onClick={toggleModal}>Close</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal for adding a new transaction */}
+                    {isAddModalOpen && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Add New Transaction</h3>
+                                <form>
+                                    <div>
+                                        <label>Description:</label>
+                                        <input
+                                            type="text"
+                                            name="transDescription"
+                                            value={newTransaction.transDescription}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>Amount:</label>
+                                        <input
+                                            type="number"
+                                            name="amount"
+                                            value={newTransaction.amount}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>Type:</label>
+                                        <select
+                                            name="transType"
+                                            value={newTransaction.transType}
+                                            onChange={handleInputChange}
+                                        >
+                                            <option value="credit">Credit</option>
+                                            <option value="debit">Debit</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" className="button" onClick={addTransaction}>
+                                        Save Transaction
+                                    </button>
+                                    <button type="button" className="button" onClick={toggleAddModal}>
+                                        Cancel
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     )}
