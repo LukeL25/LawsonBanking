@@ -51,8 +51,6 @@ const UserAccount = () => {
         try {
             // Create the new transaction object
             const updatedTransactions = [newTransaction];
-
-            console.log(updatedTransactions)
     
             // Prepare the payload with only the transactions field
             const payload = {
@@ -118,13 +116,14 @@ const UserAccount = () => {
 
                     {/* Modal for displaying transactions */}
                     {isModalOpen && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                <h3>User Transactions</h3>
+                    <div className="modal">
+                        <div className="modal-content">
+                            <h3>User Transactions</h3>
+                            <div className="transactions-list-container">
                                 <ul>
                                     {transactions.map((transaction) => (
                                         <li key={transaction._id}>
-                                            <p><strong>Description:</strong> {transaction.transDescription}</p>
+                                            <p><strong>Description:</strong> {transaction.transName}</p>
                                             <p><strong>Amount:</strong> ${transaction.amount}</p>
                                             <p><strong>Type:</strong> {transaction.transType}</p>
                                             <button
@@ -136,10 +135,12 @@ const UserAccount = () => {
                                         </li>
                                     ))}
                                 </ul>
-                                <button className="button" onClick={toggleModal}>Close</button>
                             </div>
+                            <button className="button" onClick={toggleModal}>Close</button>
                         </div>
-                    )}
+                    </div>
+                )}
+
 
                     {/* Modal for adding a new transaction */}
                     {isAddModalOpen && (
@@ -151,8 +152,8 @@ const UserAccount = () => {
                                         <label>Description:</label>
                                         <input
                                             type="text"
-                                            name="transDescription"
-                                            value={newTransaction.transDescription}
+                                            name="transName"
+                                            value={newTransaction.transName}
                                             onChange={handleInputChange}
                                         />
                                     </div>
