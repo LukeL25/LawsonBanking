@@ -320,9 +320,9 @@ const getBoundedTransactions = async (req, res) => {
 
         const userCursor = client.db("test").collection("bankings").aggregate(pipeline);
 
-        await userCursor.forEach(user => {
-            console.log(`${user._id}: ${user.averageTransactionAmount}, ${user.name}`);
-        });
+        // await userCursor.forEach(user => {
+        //     console.log(`${user._id}: ${user.averageTransactionAmount}, ${user.name}`);
+        // });
 
         // Collect all results
         const results = [];

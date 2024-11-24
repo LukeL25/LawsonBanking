@@ -41,9 +41,10 @@ const UserAccount = () => {
                     params: { lowerBnd: lowerBound, upperBnd: upperBound }, // Pass bounds as query parameters
                 }
             );
-            setFilteredTransactions(response.data);
-            setFilteredTransactionsOpen(true); // Open the filtered transactions modal
-            setFilterModalOpen(false); // Close the input modal
+            console.log(response.data);
+            // setFilteredTransactions(response.data);
+            // setFilteredTransactionsOpen(true); // Open the filtered transactions modal
+            // setFilterModalOpen(false); // Close the input modal
         } catch (error) {
             console.error('Error fetching transactions in range:', error);
         }
