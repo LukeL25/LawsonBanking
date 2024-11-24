@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 // pages & components
-import Home from './pages/Home'
+import Home from './pages/BankHome' // TODO change this to "BankHome"
 import Navbar from './components/Navbar';
 
 function App() {
