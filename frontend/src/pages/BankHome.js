@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from "react-dom";
 import axios from 'axios';
 
 const UserAccount = () => {
+
+    const users = [
+        { _id: "673756e623a73f19355bacf5", name: "Luke Lawson", averageTransactionAmount: 411 },
+        { _id: "6742c2cd22d0250168e58724", name: "Billy Bob", averageTransactionAmount: null },
+        { _id: "6742c2fb22d0250168e58726", name: "Faithe Spaghetti", averageTransactionAmount: null },
+      ];
+
     const [userData, setUserData] = useState(null);
     const [transactions, setTransactions] = useState([]);
 
-    
-
+    const [reportedUsers, setReportedUsers] = useState([]);
+    //const selectedReportedUser = users.find((user) => user._id === selectedUserId);
+    const [selectedUserId, setSelectedUserId] = useState(users[0]._id); // Default to the first user
+    const selectedUser = users.find((user) => user._id === selectedUserId);
 
     const [isModalOpen, setModalOpen] = useState(false);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -47,6 +57,10 @@ const UserAccount = () => {
             );
             console.log(response.data);
             console.log(response.data[1].averageTransactionAmount)
+            setReportedUsers(response.data);
+            console.log(reportedUsers[0]);
+            console.log(reportedUsers[1]);
+            console.log(reportedUsers[2]);
             // setFilteredTransactions(response.data);
             // setFilteredTransactionsOpen(true); // Open the filtered transactions modal
             // setFilterModalOpen(false); // Close the input modal
@@ -129,6 +143,7 @@ const UserAccount = () => {
     const toggleModal = () => setModalOpen(!isModalOpen);
     const toggleAddModal = () => setAddModalOpen(!isAddModalOpen);
     const toggleEditModal = () => setEditModalOpen(!isEditModalOpen);
+    const toggleReportModal = () => setFilterModalOpen(!isFilterModalOpen)
 
     // Handle input change for new transaction
     const handleInputChange = (e) => {
@@ -250,59 +265,44 @@ const UserAccount = () => {
 
                     {/* Filter Transactions Modal */}
                     {isFilterModalOpen && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                <h3>Filter Transactions by Amount</h3>
-                                <label>
-                                    Lower Bound:
-                                    <input
-                                        type="number"
-                                        value={lowerBound}
-                                        onChange={(e) => setLowerBound(e.target.value)}
-                                    />
-                                </label>
-                                <label>
-                                    Upper Bound:
-                                    <input
-                                        type="number"
-                                        value={upperBound}
-                                        onChange={(e) => setUpperBound(e.target.value)}
-                                    />
-                                </label>
-                                <button className="button" onClick={fetchTransactionsInRange}>
-                                    Fetch Transactions
-                                </button>
-                                <button className="button" onClick={() => setFilterModalOpen(false)}>
-                                    Close
+                        <div className="modal-overlay">
+                            <div className="modal-container">
+                                <h2>User Report</h2>
+
+                                {/* Dropdown for user selection */}
+                                <select
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
+                                className="user-dropdown"
+                                >
+                                {users.map((user) => (
+                                    <option key={user._id} value={user._id}>
+                                    {user.name}
+                                    </option>
+                                ))}
+                                </select>
+
+                                {/* Display selected user details */}
+                                <div className="user-details">
+                                <h3>{selectedUser.name}</h3>
+                                <p>
+                                    Average Transaction Amount:{" "}
+                                    {selectedUser.averageTransactionAmount !== null
+                                    ? `$${selectedUser.averageTransactionAmount}`
+                                    : "No Transactions"}
+                                </p>
+                                </div>
+
+                                {/* Close button */}
+                                <button onClick={toggleReportModal} className="close-modal-button">
+                                Close
                                 </button>
                             </div>
-                        </div>
+                            </div>
                     )}
 
-                    {/* Filtered Transactions Modal */}
-                    {isFilteredTransactionsOpen && (
-                        <div className="modal">
-                            <div className="modal-content scrollable">
-                                <h3>Filtered Transactions</h3>
-                                {filteredTransactions.length > 0 ? (
-                                    <ul>
-                                        {filteredTransactions.map((transaction) => (
-                                            <li key={transaction._id}>
-                                                <p><strong>Description:</strong> {transaction.transName}</p>
-                                                <p><strong>Amount:</strong> ${transaction.amount.toFixed(2)}</p>
-                                                <p><strong>Type:</strong> {transaction.transType}</p>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p>No transactions found in the specified range.</p>
-                                )}
-                                <button className="button" onClick={() => setFilteredTransactionsOpen(false)}>
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    
+                 
 
                     {/* Edit transaction modal */}
                     {isEditModalOpen && editableTransaction && (
@@ -350,5 +350,4 @@ const UserAccount = () => {
         </div>
     );
 };
-
 export default UserAccount;
