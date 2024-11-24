@@ -4,6 +4,10 @@ import axios from 'axios';
 const UserAccount = () => {
     const [userData, setUserData] = useState(null);
     const [transactions, setTransactions] = useState([]);
+
+    
+
+
     const [isModalOpen, setModalOpen] = useState(false);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
@@ -42,6 +46,7 @@ const UserAccount = () => {
                 }
             );
             console.log(response.data);
+            console.log(response.data[1].averageTransactionAmount)
             // setFilteredTransactions(response.data);
             // setFilteredTransactionsOpen(true); // Open the filtered transactions modal
             // setFilterModalOpen(false); // Close the input modal

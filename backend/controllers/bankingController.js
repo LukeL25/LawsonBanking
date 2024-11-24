@@ -330,9 +330,7 @@ const getBoundedTransactions = async (req, res) => {
             results.push({
                 _id: user._id,
                 name: user.name,
-                averageTransactionAmount: {
-                        $ifNull: ["$averageTransactionAmount", 0]  // Handle undefined averageTransactionAmount by setting it to 0
-                    }  
+                averageTransactionAmount: user.averageTransactionAmount
             });
         });
 
