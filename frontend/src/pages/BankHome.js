@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from "react-dom";
 import axios from 'axios';
 
 const UserAccount = () => {
@@ -45,9 +44,6 @@ const UserAccount = () => {
             console.log(reportedUsers[1]);
             console.log(reportedUsers[2]);
             toggleReportModal();
-            // setFilteredTransactions(response.data);
-            // setFilteredTransactionsOpen(true); // Open the filtered transactions modal
-            // setFilterModalOpen(false); // Close the input modal
         } catch (error) {
             console.error('Error fetching transactions in range:', error);
         }
