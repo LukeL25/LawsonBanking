@@ -4,19 +4,13 @@ import axios from 'axios';
 
 const UserAccount = () => {
 
-    const users = [
-        { _id: "673756e623a73f19355bacf5", name: "Luke Lawson", averageTransactionAmount: 411 },
-        { _id: "6742c2cd22d0250168e58724", name: "Billy Bob", averageTransactionAmount: null },
-        { _id: "6742c2fb22d0250168e58726", name: "Faithe Spaghetti", averageTransactionAmount: null },
-      ];
 
     const [userData, setUserData] = useState(null);
     const [transactions, setTransactions] = useState([]);
 
     const [reportedUsers, setReportedUsers] = useState([]);
-    //const selectedReportedUser = users.find((user) => user._id === selectedUserId);
-    const [selectedUserId, setSelectedUserId] = useState(users[0]._id); // Default to the first user
-    const selectedUser = users.find((user) => user._id === selectedUserId);
+    const [selectedUserId, setSelectedUserId] = useState([]); // Default to the first user
+    var selectedUser = reportedUsers.find((user) => user._id === selectedUserId);
 
     const [isModalOpen, setModalOpen] = useState(false);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -24,10 +18,6 @@ const UserAccount = () => {
     const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
     const [editableTransaction, setEditableTransaction] = useState(null);
     const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-    const [isFilteredTransactionsOpen, setFilteredTransactionsOpen] = useState(false);
-    const [lowerBound, setLowerBound] = useState('');
-    const [upperBound, setUpperBound] = useState('');
-    const [filteredTransactions, setFilteredTransactions] = useState([]);
     const userId = '673756e623a73f19355bacf5'; // Example user ID
 
     // Fetch user data from the API
@@ -42,25 +32,19 @@ const UserAccount = () => {
     };
 
     // Fetch transactions in the specified range
-    const fetchTransactionsInRange = async () => {
-        if (!lowerBound || !upperBound) {
-            alert('Please enter both lower and upper bounds.');
-            return;
-        }
-    
+    const fetchTransactionsInRange = async () => {    
         try {
-            const response = await axios.get(
-                `http://localhost:4000/api/banking/transactions/range/${userId}`,
-                {
-                    params: { lowerBnd: lowerBound, upperBnd: upperBound }, // Pass bounds as query parameters
-                }
-            );
+            const response = await axios.get(`http://localhost:4000/api/banking/transactions/range/${userId}`);
             console.log(response.data);
             console.log(response.data[1].averageTransactionAmount)
             setReportedUsers(response.data);
+            setSelectedUserId(response.data[0]._id)
+            selectedUser = reportedUsers.find((user) => user._id === selectedUserId)
+
             console.log(reportedUsers[0]);
             console.log(reportedUsers[1]);
             console.log(reportedUsers[2]);
+            toggleReportModal();
             // setFilteredTransactions(response.data);
             // setFilteredTransactionsOpen(true); // Open the filtered transactions modal
             // setFilterModalOpen(false); // Close the input modal
@@ -187,7 +171,7 @@ const UserAccount = () => {
                     <button className="button" onClick={toggleAddModal}>
                         Add Transaction
                     </button>
-                    <button className="button" onClick={() => setFilterModalOpen(true)}>
+                    <button className="button" onClick={() => fetchTransactionsInRange()}>
                         Filter Transactions by Range
                     </button>
         
@@ -275,7 +259,7 @@ const UserAccount = () => {
                                 onChange={(e) => setSelectedUserId(e.target.value)}
                                 className="user-dropdown"
                                 >
-                                {users.map((user) => (
+                                {reportedUsers.map((user) => (
                                     <option key={user._id} value={user._id}>
                                     {user.name}
                                     </option>
