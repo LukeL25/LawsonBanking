@@ -6,7 +6,8 @@ const {
     deleteAccount,
     updateAccount,
     updateTransactions,
-    deleteTransaction
+    deleteTransaction,
+    updateTransaction
 } = require('../controllers/bankingController')
 
 const router = express.Router()
@@ -31,6 +32,9 @@ router.put('/:id', updateTransactions)
 
 // Delete a transaction
 router.delete('/:userId/transactions/:transactionId', deleteTransaction);
+
+// Update a transaction
+router.put('/:userId/transactions/:transactionId', updateTransaction);
 
 
 module.exports = router

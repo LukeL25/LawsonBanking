@@ -6,7 +6,9 @@ const UserAccount = () => {
     const [transactions, setTransactions] = useState([]);
     const [isModalOpen, setModalOpen] = useState(false);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
+    const [editableTransaction, setEditableTransaction] = useState(null);
     const userId = '673756e623a73f19355bacf5'; // Example user ID
 
     // Fetch user data from the API
@@ -23,7 +25,7 @@ const UserAccount = () => {
     // Recalculate the balance based on transactions
     const recalculateBalance = (updatedTransactions) => {
         let newBalance = 0;
-        updatedTransactions.forEach(transaction => {
+        updatedTransactions.forEach((transaction) => {
             if (transaction.transType === 'debit') {
                 newBalance -= transaction.amount;
             } else if (transaction.transType === 'credit') {
@@ -49,34 +51,51 @@ const UserAccount = () => {
     // Add a new transaction
     const addTransaction = async () => {
         try {
-            // Prepare the payload with the new transaction
             const payload = {
                 transactions: [newTransaction],
             };
 
-            // Send PUT request to update the transactions field of the user account
             const response = await axios.put(`http://localhost:4000/api/banking/${userId}`, payload);
             const updatedTransactions = response.data.transactions;
-
-            // Calculate the new balance and update state
             const newBalance = recalculateBalance(updatedTransactions);
+
             setTransactions(updatedTransactions);
             setUserData({ ...userData, transactions: updatedTransactions, balance: newBalance });
-            setAddModalOpen(false); // Close the add transaction modal
+            setAddModalOpen(false);
         } catch (error) {
             console.error('Error adding transaction:', error);
         }
     };
 
-    // Toggle modal visibility
-    const toggleModal = () => {
-        setModalOpen(!isModalOpen);
-    };
+    // Update a transaction
+    const updateTransaction = async () => {
+        try {
+            // Send the updated transaction to the API
+            const response = await axios.put(
+                `http://localhost:4000/api/banking/${userId}/transactions/${editableTransaction._id}`,
+                { transaction: editableTransaction }
+            );
 
-    // Toggle add transaction modal visibility
-    const toggleAddModal = () => {
-        setAddModalOpen(!isAddModalOpen);
+            const updatedTransactions = response.data.transactions;
+            const newBalance = recalculateBalance(updatedTransactions);
+
+            setTransactions(updatedTransactions);
+            setUserData({ ...userData, transactions: updatedTransactions, balance: newBalance });
+
+    
+            // Close the edit modal
+            setEditModalOpen(false);
+            setEditableTransaction(null);
+        } catch (error) {
+            console.error('Error updating transaction:', error);
+        }
     };
+    
+
+    // Toggle modal visibility
+    const toggleModal = () => setModalOpen(!isModalOpen);
+    const toggleAddModal = () => setAddModalOpen(!isAddModalOpen);
+    const toggleEditModal = () => setEditModalOpen(!isEditModalOpen);
 
     // Handle input change for new transaction
     const handleInputChange = (e) => {
@@ -87,7 +106,21 @@ const UserAccount = () => {
         });
     };
 
-    // Fetch user data when the component loads
+    // Handle input change for editable transaction
+    const handleEditInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditableTransaction({
+            ...editableTransaction,
+            [name]: name === 'amount' ? parseFloat(value) : value,
+        });
+    };
+
+    // Open edit modal with selected transaction
+    const editTransaction = (transaction) => {
+        setEditableTransaction(transaction);
+        setEditModalOpen(true);
+    };
+
     useEffect(() => {
         fetchUserData();
     }, []);
@@ -107,72 +140,110 @@ const UserAccount = () => {
                         Add Transaction
                     </button>
 
-                    {/* Modal for displaying transactions */}
+                    {/* Transaction list modal */}
                     {isModalOpen && (
                         <div className="modal">
                             <div className="modal-content">
                                 <h3>User Transactions</h3>
-                                <div className="transactions-list-container">
-                                    <ul>
-                                        {transactions.map((transaction) => (
-                                            <li key={transaction._id}>
-                                                <p><strong>Description:</strong> {transaction.transName}</p>
-                                                <p><strong>Amount:</strong> ${transaction.amount.toFixed(2)}</p>
-                                                <p><strong>Type:</strong> {transaction.transType}</p>
-                                                <button
-                                                    className="button delete-button"
-                                                    onClick={() => deleteTransaction(transaction._id)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                                <ul>
+                                    {transactions.map((transaction) => (
+                                        <li key={transaction._id}>
+                                            <p><strong>Description:</strong> {transaction.transName}</p>
+                                            <p><strong>Amount:</strong> ${transaction.amount.toFixed(2)}</p>
+                                            <p><strong>Type:</strong> {transaction.transType}</p>
+                                            <button
+                                                className="button delete-button"
+                                                onClick={() => deleteTransaction(transaction._id)}
+                                            >
+                                                Delete
+                                            </button>
+                                            <button
+                                                className="button edit-button"
+                                                onClick={() => editTransaction(transaction)}
+                                            >
+                                                Edit
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
                                 <button className="button" onClick={toggleModal}>Close</button>
                             </div>
                         </div>
                     )}
 
-                    {/* Modal for adding a new transaction */}
+                    {/* Add transaction modal */}
                     {isAddModalOpen && (
                         <div className="modal">
                             <div className="modal-content">
                                 <h3>Add New Transaction</h3>
                                 <form>
-                                    <div>
-                                        <label>Description:</label>
-                                        <input
-                                            type="text"
-                                            name="transDescription"
-                                            value={newTransaction.transDescription}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label>Amount:</label>
-                                        <input
-                                            type="number"
-                                            name="amount"
-                                            value={newTransaction.amount}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label>Type:</label>
-                                        <select
-                                            name="transType"
-                                            value={newTransaction.transType}
-                                            onChange={handleInputChange}
-                                        >
-                                            <option value="credit">Credit</option>
-                                            <option value="debit">Debit</option>
-                                        </select>
-                                    </div>
+                                    <label>Description:</label>
+                                    <input
+                                        type="text"
+                                        name="transName"
+                                        value={newTransaction.transName}
+                                        onChange={handleInputChange}
+                                    />
+                                    <label>Amount:</label>
+                                    <input
+                                        type="number"
+                                        name="amount"
+                                        value={newTransaction.amount}
+                                        onChange={handleInputChange}
+                                    />
+                                    <label>Type:</label>
+                                    <select
+                                        name="transType"
+                                        value={newTransaction.transType}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="credit">Credit</option>
+                                        <option value="debit">Debit</option>
+                                    </select>
                                     <button type="button" className="button" onClick={addTransaction}>
                                         Save Transaction
                                     </button>
                                     <button type="button" className="button" onClick={toggleAddModal}>
+                                        Cancel
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Edit transaction modal */}
+                    {isEditModalOpen && editableTransaction && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Edit Transaction</h3>
+                                <form>
+                                    <label>Description:</label>
+                                    <input
+                                        type="text"
+                                        name="transName"
+                                        value={editableTransaction.transName}
+                                        onChange={handleEditInputChange}
+                                    />
+                                    <label>Amount:</label>
+                                    <input
+                                        type="number"
+                                        name="amount"
+                                        value={editableTransaction.amount}
+                                        onChange={handleEditInputChange}
+                                    />
+                                    <label>Type:</label>
+                                    <select
+                                        name="transType"
+                                        value={editableTransaction.transType}
+                                        onChange={handleEditInputChange}
+                                    >
+                                        <option value="credit">Credit</option>
+                                        <option value="debit">Debit</option>
+                                    </select>
+                                    <button type="button" className="button" onClick={updateTransaction}>
+                                        Update Transaction
+                                    </button>
+                                    <button type="button" className="button" onClick={toggleEditModal}>
                                         Cancel
                                     </button>
                                 </form>

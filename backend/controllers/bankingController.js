@@ -38,41 +38,6 @@ const createAccount = async (req, res) => {
     }
 }
 
-// TODO me playing around with creating a transaction within 
-// an already created user account
-const mockCreateTransaction = async (req, res) => {
-    const {userId, transName, amount, transType} = req.body;
-
-    // Create new transaction
-    const newTransaction = {
-        transName,
-        amount,
-        transType
-    };
-
-    try {
-        // Find the existing user by its ID and add the transaction entry
-        const updatedUser = await Workout.findByIdAndUpdate (
-            userId,
-            { $push: { transactions: newTransaction } },
-            { new: true } // Option to return the updated workout document
-        );
-
-
-        // If the workout is not found, return an error
-        if (!updatedUser) {
-            return res.status(404).json({ error: 'Workout not found' });
-        }
-
-        // Return the updated workout document
-        res.status(200).json(updatedUser);
-
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-}
-
-
 // delete a workout
 const deleteAccount = async (req,res) => {
     const { id } = req.params
@@ -188,6 +153,56 @@ const deleteTransaction = async (req, res) => {
     }
 };
 
+// updates a single transaction
+const updateTransaction = async (req, res) => {
+    const { userId, transactionId } = req.params;
+    const { transName, amount, transType } = req.body.transaction; // Extract transaction data from the request body
+
+    try {
+        // Fetch the user document
+        const user = await Banking.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Find the transaction to update
+        const transaction = user.transactions.find(
+            (trans) => trans._id.toString() === transactionId
+        );
+
+        if (!transaction) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        // Recalculate the balance
+        const oldAmount = transaction.amount;
+        const newBalance = 
+            transType === "credit" 
+                ? user.balance - oldAmount + amount 
+                : user.balance + oldAmount - amount;
+
+        // Update the transaction within the transactions array
+        const updatedUser = await Banking.findOneAndUpdate(
+            { _id: userId, 'transactions._id': transactionId }, // Match the user and the specific transaction
+            {
+                $set: {
+                    'transactions.$.transName': transName,
+                    'transactions.$.amount': amount,
+                    'transactions.$.transType': transType,
+                    balance: newBalance,
+                },
+            },
+            { new: true } // Return the updated document
+        );
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+
 
 
 
@@ -198,5 +213,6 @@ module.exports = {
     deleteAccount,
     updateAccount,
     updateTransactions,
-    deleteTransaction
+    deleteTransaction,
+    updateTransaction
 }
