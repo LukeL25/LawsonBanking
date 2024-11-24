@@ -1,5 +1,9 @@
 const Banking = require('../models/bankingModel')
 const mongoose = require('mongoose')
+const { connectToDb } = require('../db');
+const { ObjectId } = require('mongodb');
+const { MongoClient } = require('mongodb');
+
 
 // get all account transactions
 const getAccounts = async (req, res) => {
@@ -203,6 +207,149 @@ const updateTransaction = async (req, res) => {
 };
 
 
+// Filters transactions by amount bounds
+const BoundedTransactions = async (req, res) => {
+    const { userId } = req.params;
+    const { lowerBnd, upperBnd } = req.query; // Extract from query parameters
+
+    console.log('Bounds:', lowerBnd, upperBnd);
+
+    chillGuy();
+
+    try {
+        const database = await connectToDb();
+        const usersCollection = database.collection('bankings');
+
+        const lowerBound = lowerBnd ? parseFloat(lowerBnd) : -1;
+        const upperBound = upperBnd ? parseFloat(upperBnd) : -1;
+
+        let result;
+
+        // Check database connection
+        await client.connect();
+        console.log("Connected to database");
+
+
+        if (lowerBound === -1) {
+            console.log("1")
+            // No lower bound specified
+            result = await usersCollection.aggregate([
+                { $match: { _id: ObjectId(userId) } },
+                { $unwind: '$transactions' },
+                { $match: { 'transactions.amount': { $lt: upperBound } } },
+                { $project: { transactions: 1 } }
+            ]).toArray();
+        } else if (upperBound === -1) {
+            console.log("2")
+            // No upper bound specified
+            result = await usersCollection.aggregate([
+                { $match: { _id: ObjectId(userId) } },
+                { $unwind: '$transactions' },
+                { $match: { 'transactions.amount': { $gt: lowerBound } } },
+                { $project: { transactions: 1 } }
+            ]).toArray();
+        } else {
+            console.log("3")
+            // Both bounds are specified
+            result = await usersCollection.aggregate([
+                { $match: { _id: new ObjectId(userId) } },
+                { $unwind: '$transactions' },
+                { $match: { 'transactions.amount': { $gt: lowerBound, $lt: upperBound } } },
+                { $project: { transactions: 1 } }
+            ]).toArray();
+            console.log("hi!")
+        }
+
+        console.log(result)
+
+        if (result.length === 0) {
+            console.log("we here error")
+            return res.status(404).json({ message: 'No transactions found within range' });
+        }
+
+        const highValueTransactions = result.map((item) => item.transactions);
+        res.status(200).json(highValueTransactions);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// update/create new user transaction
+// TODO rename this
+const getBoundedTransactions = async (req, res) => {
+    const client = new MongoClient(process.env.MONGO_URI);
+
+    try {
+        // Connect to the MongoDB cluster
+        await client.connect();
+
+        // Make the appropriate DB calls
+        const pipeline = [
+            {
+            $unwind: {
+                path: "$transactions",  // Flatten the transactions array
+                preserveNullAndEmptyArrays: true
+            }
+            },
+            {
+            $group: {
+                _id: "$_id",  // Group by user _id
+                averageTransactionAmount: { $avg: "$transactions.amount" }  // Calculate the average of the transaction amounts
+            }
+            },
+            {
+            $lookup: {
+                from: "bankings",  // Assuming the collection where the user data is stored is called "users"
+                localField: "_id",  // Field from the aggregation to match on
+                foreignField: "_id",  // Field in the users collection to match on
+                as: "userDetails"  // Alias for the joined data
+            }
+            },
+            {
+            $unwind: "$userDetails"  // Unwind the userDetails array to flatten it
+            },
+            {
+            $project: {
+                _id: 1,  // Keep the _id field
+                name: "$userDetails.name",  // Include the name from userDetails
+                averageTransactionAmount: 1  // Include the averageTransactionAmount from the previous stage
+            }
+            }
+        ];
+
+        const userCursor = client.db("test").collection("bankings").aggregate(pipeline);
+
+        await userCursor.forEach(user => {
+            console.log(`${user._id}: ${user.averageTransactionAmount}, ${user.name}`);
+        });
+
+        // Collect all results
+        const results = [];
+        await userCursor.forEach(user => {
+            results.push({
+                _id: user._id,
+                name: user.name,
+                averageTransactionAmount: {
+                        $ifNull: ["$averageTransactionAmount", 0]  // Handle undefined averageTransactionAmount by setting it to 0
+                    }  
+            });
+        });
+
+        // Send the results as a JSON response
+        res.status(200).json(results);
+
+    } finally {
+        // Close the connection to the MongoDB cluster
+        await client.close();
+    }
+};
+
+
+
+
+// Filters transactions by type (debit/credt)
+
 
 
 
@@ -214,5 +361,6 @@ module.exports = {
     updateAccount,
     updateTransactions,
     deleteTransaction,
-    updateTransaction
+    updateTransaction,
+    getBoundedTransactions
 }

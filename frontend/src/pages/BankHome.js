@@ -9,6 +9,11 @@ const UserAccount = () => {
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
     const [editableTransaction, setEditableTransaction] = useState(null);
+    const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+    const [isFilteredTransactionsOpen, setFilteredTransactionsOpen] = useState(false);
+    const [lowerBound, setLowerBound] = useState('');
+    const [upperBound, setUpperBound] = useState('');
+    const [filteredTransactions, setFilteredTransactions] = useState([]);
     const userId = '673756e623a73f19355bacf5'; // Example user ID
 
     // Fetch user data from the API
@@ -19,6 +24,28 @@ const UserAccount = () => {
             setTransactions(response.data.transactions);
         } catch (error) {
             console.error('Error fetching user data:', error);
+        }
+    };
+
+    // Fetch transactions in the specified range
+    const fetchTransactionsInRange = async () => {
+        if (!lowerBound || !upperBound) {
+            alert('Please enter both lower and upper bounds.');
+            return;
+        }
+    
+        try {
+            const response = await axios.get(
+                `http://localhost:4000/api/banking/transactions/range/${userId}`,
+                {
+                    params: { lowerBnd: lowerBound, upperBnd: upperBound }, // Pass bounds as query parameters
+                }
+            );
+            setFilteredTransactions(response.data);
+            setFilteredTransactionsOpen(true); // Open the filtered transactions modal
+            setFilterModalOpen(false); // Close the input modal
+        } catch (error) {
+            console.error('Error fetching transactions in range:', error);
         }
     };
 
@@ -139,6 +166,10 @@ const UserAccount = () => {
                     <button className="button" onClick={toggleAddModal}>
                         Add Transaction
                     </button>
+                    <button className="button" onClick={() => setFilterModalOpen(true)}>
+                        Filter Transactions by Range
+                    </button>
+        
 
                     {/* Transaction list modal */}
                     {isModalOpen && (
@@ -207,6 +238,62 @@ const UserAccount = () => {
                                         Cancel
                                     </button>
                                 </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Filter Transactions Modal */}
+                    {isFilterModalOpen && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Filter Transactions by Amount</h3>
+                                <label>
+                                    Lower Bound:
+                                    <input
+                                        type="number"
+                                        value={lowerBound}
+                                        onChange={(e) => setLowerBound(e.target.value)}
+                                    />
+                                </label>
+                                <label>
+                                    Upper Bound:
+                                    <input
+                                        type="number"
+                                        value={upperBound}
+                                        onChange={(e) => setUpperBound(e.target.value)}
+                                    />
+                                </label>
+                                <button className="button" onClick={fetchTransactionsInRange}>
+                                    Fetch Transactions
+                                </button>
+                                <button className="button" onClick={() => setFilterModalOpen(false)}>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Filtered Transactions Modal */}
+                    {isFilteredTransactionsOpen && (
+                        <div className="modal">
+                            <div className="modal-content scrollable">
+                                <h3>Filtered Transactions</h3>
+                                {filteredTransactions.length > 0 ? (
+                                    <ul>
+                                        {filteredTransactions.map((transaction) => (
+                                            <li key={transaction._id}>
+                                                <p><strong>Description:</strong> {transaction.transName}</p>
+                                                <p><strong>Amount:</strong> ${transaction.amount.toFixed(2)}</p>
+                                                <p><strong>Type:</strong> {transaction.transType}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p>No transactions found in the specified range.</p>
+                                )}
+                                <button className="button" onClick={() => setFilteredTransactionsOpen(false)}>
+                                    Close
+                                </button>
                             </div>
                         </div>
                     )}

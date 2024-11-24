@@ -7,7 +7,8 @@ const {
     updateAccount,
     updateTransactions,
     deleteTransaction,
-    updateTransaction
+    updateTransaction,
+    getBoundedTransactions
 } = require('../controllers/bankingController')
 
 const router = express.Router()
@@ -35,6 +36,12 @@ router.delete('/:userId/transactions/:transactionId', deleteTransaction);
 
 // Update a transaction
 router.put('/:userId/transactions/:transactionId', updateTransaction);
+
+// Filter by transaction size
+router.get('/transactions/range/:userId', getBoundedTransactions);
+
+// Filter by transaction type (credit/debit)
+
 
 
 module.exports = router

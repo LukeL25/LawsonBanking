@@ -30,12 +30,15 @@
 }
 
 .modal-content {
-  background-color: #FFF;
+  max-height: 80vh; /* Limit the modal's height to 80% of the viewport height */
+  overflow-y: auto; /* Enable vertical scrolling if the content exceeds the height */
   padding: 20px;
-  border-radius: 10px;
-  width: 80%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  border-radius: 8px;
+  width: 90%;
   max-width: 500px;
-  text-align: left;
+  margin: auto;
 }
 
 ul {
