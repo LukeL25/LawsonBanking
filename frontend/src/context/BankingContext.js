@@ -1,12 +1,12 @@
 import { createContext, useReducer } from 'react'
 
-export const WorkoutsContext = createContext()
+export const BankingContext = createContext()
 
-export const workoutsReducer = (state, action) => {
+export const bankingReducer = (state, action) => {
     switch(action.type) {
-        case 'SET_WORKOUTS':
+        case 'SET_TRANSACTIONS':
             return {
-                workouts: action.payload
+                transactions: action.payload
             }
         case 'CREATE_WORKOUT':
             return {
@@ -23,16 +23,16 @@ export const workoutsReducer = (state, action) => {
     }
 }
 
-const WorkoutsContextProvider = ({ children }) => {
-    const [state, dispatch] = useReducer(workoutsReducer, {
+const TransactionsContextProvider = ({ children }) => {
+    const [state, dispatch] = useReducer(bankingReducer, {
         workouts: null
     })
 
     return (
-        <WorkoutsContext.Provider value={{...state, dispatch}}>
+        <TransactionsContextProvider.Provider value={{...state, dispatch}}>
             { children }
-        </WorkoutsContext.Provider>
+        </TransactionsContextProvider.Provider>
     )
 }
 
-export default WorkoutsContextProvider
+export default TransactionsContextProvider
