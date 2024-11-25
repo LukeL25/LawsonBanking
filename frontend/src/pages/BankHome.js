@@ -17,7 +17,10 @@ const UserAccount = () => {
     const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
     const [editableTransaction, setEditableTransaction] = useState(null);
     const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-    const userId = '673756e623a73f19355bacf5'; // Example user ID
+    
+    const [allUsers, setAllUsers] = useState([]); // All users for dropdown
+    const [userId, setUserId] = useState('673756e623a73f19355bacf5'); // Default user ID
+    const [isUserSelectModalOpen, setUserSelectModalOpen] = useState(false);
 
     // Fetch user data from the API
     const fetchUserData = async () => {
@@ -27,6 +30,16 @@ const UserAccount = () => {
             setTransactions(response.data.transactions);
         } catch (error) {
             console.error('Error fetching user data:', error);
+        }
+    };
+
+    // Fetch all users (for dropdown)
+    const fetchAllUsers = async () => {
+        try {
+        const response = await axios.get('http://localhost:4000/api/banking/'); // Replace with actual endpoint
+        setAllUsers(response.data);
+        } catch (error) {
+        console.error('Error fetching all users:', error);
         }
     };
 
@@ -124,6 +137,7 @@ const UserAccount = () => {
     const toggleAddModal = () => setAddModalOpen(!isAddModalOpen);
     const toggleEditModal = () => setEditModalOpen(!isEditModalOpen);
     const toggleReportModal = () => setFilterModalOpen(!isFilterModalOpen)
+    const toggleUserSelectModal = () => setUserSelectModalOpen(!isUserSelectModalOpen);
 
     // Handle input change for new transaction
     const handleInputChange = (e) => {
@@ -143,6 +157,17 @@ const UserAccount = () => {
         });
     };
 
+    // Handle user selection
+    const handleUserChange = (e) => {
+        console.log(e.target.value)
+        setUserId(e.target.value); // Update userId
+    };
+
+    const confirmUserSelection = () => {
+        setUserSelectModalOpen(false); // Close the modal
+        fetchUserData();
+      };
+
     // Open edit modal with selected transaction
     const editTransaction = (transaction) => {
         setEditableTransaction(transaction);
@@ -151,6 +176,11 @@ const UserAccount = () => {
 
     useEffect(() => {
         fetchUserData();
+    }, [userId]);
+
+    // Fetch all users on initial load
+    useEffect(() => {
+        fetchAllUsers();
     }, []);
 
     return (
@@ -159,8 +189,15 @@ const UserAccount = () => {
                 <>
                     <h2>User Account Information</h2>
                     <p><strong>Name:</strong> {userData.name}</p>
-                    <p><strong>Balance:</strong> ${userData.balance.toFixed(2)}</p>
-
+                    <p>
+                    <strong>Balance:</strong> 
+                    {userData.balance !== undefined 
+                        ? `$${userData.balance.toFixed(2)}` 
+                        : "Balance not available"}
+                    </p>
+                    <button className="button" onClick={toggleUserSelectModal}>
+                        Switch User
+                    </button>
                     <button className="button" onClick={toggleModal}>
                         Show Transactions
                     </button>
@@ -170,7 +207,33 @@ const UserAccount = () => {
                     <button className="button" onClick={() => fetchTransactionsInRange()}>
                         User Transaction Report
                     </button>
-        
+
+                    {isUserSelectModalOpen && (
+                    <div className="modal-overlay">
+                    <div className="modal-container">
+                        <h2>Select User</h2>
+                        <select
+                        value={userId}
+                        onChange={handleUserChange}
+                        className="user-dropdown"
+                        >
+                        {allUsers.map((user) => (
+                            <option key={user._id} value={user._id}>
+                            {user.name}
+                            </option>
+                        ))}
+                        </select>
+                        <div className="modal-actions">
+                        <button className="button" onClick={confirmUserSelection}>
+                            Confirm
+                        </button>
+                        <button className="button" onClick={toggleUserSelectModal}>
+                            Cancel
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                )}
 
                     {/* Transaction list modal */}
                     {isModalOpen && (

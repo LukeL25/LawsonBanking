@@ -164,7 +164,9 @@ const numTransactions = [
 
 // get all account transactions
 const getAccounts = async (req, res) => {
+    console.log("here!")
     const accounts = await Banking.find({}).sort({createdAt: -1})
+
 
     res.status(200).json(accounts)
 }
