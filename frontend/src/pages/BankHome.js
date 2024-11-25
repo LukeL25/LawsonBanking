@@ -271,6 +271,18 @@ const UserAccount = () => {
                                     ? `$${selectedUser.averageTransactionAmount}`
                                     : "No Transactions"}
                                 </p>
+                                <p>
+                                    Average Credit Transaction Amount:{" "}
+                                    {selectedUser.creditAverage !== null
+                                    ? `$${selectedUser.creditAverage}`
+                                    : "$0"}
+                                </p>
+                                <p>
+                                    Average Credit Transaction Amount:{" "}
+                                    {selectedUser.debitAverage !== null
+                                    ? `$${selectedUser.debitAverage}`
+                                    : "$0"}
+                                </p>
                                 </div>
 
                                 {/* Close button */}
