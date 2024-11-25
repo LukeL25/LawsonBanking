@@ -168,7 +168,7 @@ const UserAccount = () => {
                         Add Transaction
                     </button>
                     <button className="button" onClick={() => fetchTransactionsInRange()}>
-                        Filter Transactions by Range
+                        User Transaction Report
                     </button>
         
 
