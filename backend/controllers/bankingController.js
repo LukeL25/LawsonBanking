@@ -295,8 +295,14 @@ const deleteTransaction = async (req, res) => {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
+        let newBalance;
+
         // Calculate the new balance
-        const newBalance = user.balance - transaction.amount;
+        if (transaction.transType == "credit") {
+            newBalance = user.balance - transaction.amount;
+        } else {
+            newBalance = user.balance + transaction.amount;
+        }
 
         // Remove the transaction using $pull
         const updatedUser = await Banking.findByIdAndUpdate(
@@ -360,75 +366,6 @@ const updateTransaction = async (req, res) => {
         res.status(200).json(updatedUser);
     } catch (error) {
         res.status(400).json({ error: error.message });
-    }
-};
-
-
-// Filters transactions by amount bounds
-const BoundedTransactions = async (req, res) => {
-    const { userId } = req.params;
-    const { lowerBnd, upperBnd } = req.query; // Extract from query parameters
-
-    console.log('Bounds:', lowerBnd, upperBnd);
-
-    chillGuy();
-
-    try {
-        const database = await connectToDb();
-        const usersCollection = database.collection('bankings');
-
-        const lowerBound = lowerBnd ? parseFloat(lowerBnd) : -1;
-        const upperBound = upperBnd ? parseFloat(upperBnd) : -1;
-
-        let result;
-
-        // Check database connection
-        await client.connect();
-        console.log("Connected to database");
-
-
-        if (lowerBound === -1) {
-            console.log("1")
-            // No lower bound specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $lt: upperBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-        } else if (upperBound === -1) {
-            console.log("2")
-            // No upper bound specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $gt: lowerBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-        } else {
-            console.log("3")
-            // Both bounds are specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: new ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $gt: lowerBound, $lt: upperBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-            console.log("hi!")
-        }
-
-        console.log(result)
-
-        if (result.length === 0) {
-            console.log("we here error")
-            return res.status(404).json({ message: 'No transactions found within range' });
-        }
-
-        const highValueTransactions = result.map((item) => item.transactions);
-        res.status(200).json(highValueTransactions);
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
 };
 
