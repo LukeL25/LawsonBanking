@@ -13,8 +13,10 @@ const UserAccount = () => {
 
     const [isModalOpen, setModalOpen] = useState(false);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [isAddAccountOpen, setAddAccountModal] = useState(false);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [newTransaction, setNewTransaction] = useState({ transDescription: '', amount: '', transType: 'credit' });
+    const [newUser, setNewUser] = useState({ name: '', balance: 0, transactions: []})
     const [editableTransaction, setEditableTransaction] = useState(null);
     const [isFilterModalOpen, setFilterModalOpen] = useState(false);
     
@@ -107,6 +109,31 @@ const UserAccount = () => {
         }
     };
 
+    // Add a new user account
+    const addUser = async () => {
+        try {
+            const payload = {
+                name: newUser.name,
+                balance: parseFloat(newUser.balance) || 0,
+                transactions: newUser.transactions || [], 
+            };
+    
+            console.log("Payload being sent:", payload);
+    
+            const response = await axios.post(`http://localhost:4000/api/banking/`, payload, {
+                headers: { "Content-Type": "application/json" },
+            });
+            console.log("User added successfully:", response.data);
+    
+            // Reset newUser state
+            setNewUser({ name: '', balance: 0, transactions: [] });
+            fetchAllUsers()
+            setAddAccountModal(false);
+        } catch (error) {
+            console.error("Error adding new user:", error.response?.data || error.message);
+        }
+    };
+
     // Update a transaction
     const updateTransaction = async () => {
         try {
@@ -135,6 +162,7 @@ const UserAccount = () => {
     // Toggle modal visibility
     const toggleModal = () => setModalOpen(!isModalOpen);
     const toggleAddModal = () => setAddModalOpen(!isAddModalOpen);
+    const toggleAddAccountModal = () => setAddAccountModal(!isAddAccountOpen);
     const toggleEditModal = () => setEditModalOpen(!isEditModalOpen);
     const toggleReportModal = () => setFilterModalOpen(!isFilterModalOpen)
     const toggleUserSelectModal = () => setUserSelectModalOpen(!isUserSelectModalOpen);
@@ -147,6 +175,18 @@ const UserAccount = () => {
             [name]: name === 'amount' ? parseFloat(value) : value,
         });
     };
+
+    // Handle input change for new account
+    const handleAccountInputChange = (e) => {
+        const { name, value } = e.target;
+    
+        setNewUser((prevState) => ({
+            ...prevState,
+            [name]: value, // Dynamically update the field by its name
+        }));
+    };
+    
+    
 
     // Handle input change for editable transaction
     const handleEditInputChange = (e) => {
@@ -195,6 +235,9 @@ const UserAccount = () => {
                         ? `$${userData.balance.toFixed(2)}` 
                         : "Balance not available"}
                     </p>
+                    <button className="button" onClick={toggleAddAccountModal}>
+                        Add User
+                    </button>
                     <button className="button" onClick={toggleUserSelectModal}>
                         Switch User
                     </button>
@@ -306,6 +349,30 @@ const UserAccount = () => {
                         </div>
                     )}
 
+                    {/* Add account modal */}
+                    {isAddAccountOpen && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Add New Account</h3>
+                                <form>
+                                    <label>Name of User:</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={newUser.name}
+                                        onChange={handleAccountInputChange}
+                                    />
+                                    <button type="button" className="button" onClick={addUser}>
+                                        Add User
+                                    </button>
+                                    <button type="button" className="button" onClick={toggleAddAccountModal}>
+                                        Cancel
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Filter Transactions Modal */}
                     {isFilterModalOpen && (
                         <div className="modal-overlay">
@@ -355,9 +422,6 @@ const UserAccount = () => {
                             </div>
                             </div>
                     )}
-
-                    
-                 
 
                     {/* Edit transaction modal */}
                     {isEditModalOpen && editableTransaction && (

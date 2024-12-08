@@ -92,6 +92,7 @@ const averageCreditDebitAmount = [
     },      
 ];
 
+// If you have time implement this, otherwise just skip
 const numTransactions = [
     [
         {
