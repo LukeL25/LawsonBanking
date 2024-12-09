@@ -5,10 +5,168 @@ const { ObjectId } = require('mongodb');
 const { MongoClient } = require('mongodb');
 
 
+// MongoDb Prepared Statements 
+const averageAmount = [
+    {
+        $unwind: {
+            path: "$transactions",
+            preserveNullAndEmptyArrays: true
+        }
+        },
+        {
+        $group: {
+            _id: "$_id",  // Group by user _id
+            averageTransactionAmount: { $avg: "$transactions.amount" }  // Calculate the average of the transaction amounts
+        }
+        },
+        {
+        $lookup: {
+            from: "bankings",  
+            localField: "_id", 
+            foreignField: "_id",
+            as: "userDetails"  
+        }
+        },
+        {
+        $unwind: "$userDetails" 
+        },
+        {
+        $project: {
+            _id: 1,  // Keep the _id field
+            name: "$userDetails.name",  // Include the name from userDetails
+            averageTransactionAmount: 1  // Include the averageTransactionAmount from the previous stage
+        }
+    }
+];
+
+
+const averageCreditDebitAmount = [
+    {
+        $unwind: {
+        path: "$transactions",
+        preserveNullAndEmptyArrays: true,
+        },
+    },
+    {
+        $group: {
+        _id: {
+            userId: "$_id", // Group by user ID
+            transType: "$transactions.transType", // Group by transaction type (credit/debit)
+        },
+        averageTransactionAmount: { $avg: "$transactions.amount" }, // Calculate average for each transType
+        },
+    },
+    {
+        $group: {
+        _id: "$_id.userId", // Regroup by user ID
+        creditAverage: {
+            $max: {
+            $cond: [{ $eq: ["$_id.transType", "credit"] }, "$averageTransactionAmount", null],
+            },
+        },
+        debitAverage: {
+            $max: {
+            $cond: [{ $eq: ["$_id.transType", "debit"] }, "$averageTransactionAmount", null],
+            },
+        },
+        },
+    },
+    {
+        $lookup: {
+        from: "bankings", 
+        localField: "_id",
+        foreignField: "_id",
+        as: "userDetails",
+        },
+    },
+    {
+        $unwind: "$userDetails",
+    },
+    {
+        $project: {
+        _id: 1, 
+        name: "$userDetails.name",
+        creditAverage: 1,
+        debitAverage: 1,
+        },
+    },      
+];
+
+// If you have time implement this, otherwise just skip
+const numTransactions = [
+    [
+        {
+            '$unwind': {
+                'path': '$transactions', 
+                'preserveNullAndEmptyArrays': false
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    'userId': '$_id', 
+                    'transType': '$transactions.transType'
+                }, 
+                'count': {
+                    '$sum': 1
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id.userId', 
+                'creditCount': {
+                    '$sum': {
+                        '$cond': [
+                            {
+                                '$eq': [
+                                    '$_id.transType', 'credit'
+                                ]
+                            }, '$count', 0
+                        ]
+                    }
+                }, 
+                'debitCount': {
+                    '$sum': {
+                        '$cond': [
+                            {
+                                '$eq': [
+                                    '$_id.transType', 'debit'
+                                ]
+                            }, '$count', 0
+                        ]
+                    }
+                }, 
+                'totalTransactionCount': {
+                    '$sum': '$count'
+                }
+            }
+        }, {
+            '$lookup': {
+                'from': 'bankings', 
+                'localField': '_id', 
+                'foreignField': '_id', 
+                'as': 'userDetails'
+            }
+        }, {
+            '$unwind': {
+                'path': '$userDetails'
+            }
+        }, {
+            '$project': {
+                '_id': 1, 
+                'name': '$userDetails.name', 
+                'creditCount': 1, 
+                'debitCount': 1, 
+                'totalTransactionCount': 1
+            }
+        }
+    ]
+];
+
+
 // get all account transactions
 const getAccounts = async (req, res) => {
+    console.log("here!")
     const accounts = await Banking.find({}).sort({createdAt: -1})
-
     res.status(200).json(accounts)
 }
 
@@ -138,8 +296,14 @@ const deleteTransaction = async (req, res) => {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
+        let newBalance;
+
         // Calculate the new balance
-        const newBalance = user.balance - transaction.amount;
+        if (transaction.transType == "credit") {
+            newBalance = user.balance - transaction.amount;
+        } else {
+            newBalance = user.balance + transaction.amount;
+        }
 
         // Remove the transaction using $pull
         const updatedUser = await Banking.findByIdAndUpdate(
@@ -206,77 +370,8 @@ const updateTransaction = async (req, res) => {
     }
 };
 
-
-// Filters transactions by amount bounds
-const BoundedTransactions = async (req, res) => {
-    const { userId } = req.params;
-    const { lowerBnd, upperBnd } = req.query; // Extract from query parameters
-
-    console.log('Bounds:', lowerBnd, upperBnd);
-
-    chillGuy();
-
-    try {
-        const database = await connectToDb();
-        const usersCollection = database.collection('bankings');
-
-        const lowerBound = lowerBnd ? parseFloat(lowerBnd) : -1;
-        const upperBound = upperBnd ? parseFloat(upperBnd) : -1;
-
-        let result;
-
-        // Check database connection
-        await client.connect();
-        console.log("Connected to database");
-
-
-        if (lowerBound === -1) {
-            console.log("1")
-            // No lower bound specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $lt: upperBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-        } else if (upperBound === -1) {
-            console.log("2")
-            // No upper bound specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $gt: lowerBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-        } else {
-            console.log("3")
-            // Both bounds are specified
-            result = await usersCollection.aggregate([
-                { $match: { _id: new ObjectId(userId) } },
-                { $unwind: '$transactions' },
-                { $match: { 'transactions.amount': { $gt: lowerBound, $lt: upperBound } } },
-                { $project: { transactions: 1 } }
-            ]).toArray();
-            console.log("hi!")
-        }
-
-        console.log(result)
-
-        if (result.length === 0) {
-            console.log("we here error")
-            return res.status(404).json({ message: 'No transactions found within range' });
-        }
-
-        const highValueTransactions = result.map((item) => item.transactions);
-        res.status(200).json(highValueTransactions);
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
 // update/create new user transaction
-// TODO rename this
+// TODO rename this, mayube add something to count transactions
 const getBoundedTransactions = async (req, res) => {
     const client = new MongoClient(process.env.MONGO_URI);
 
@@ -284,55 +379,44 @@ const getBoundedTransactions = async (req, res) => {
         // Connect to the MongoDB cluster
         await client.connect();
 
-        // Make the appropriate DB calls
-        const pipeline = [
-            {
-            $unwind: {
-                path: "$transactions",  // Flatten the transactions array
-                preserveNullAndEmptyArrays: true
-            }
-            },
-            {
-            $group: {
-                _id: "$_id",  // Group by user _id
-                averageTransactionAmount: { $avg: "$transactions.amount" }  // Calculate the average of the transaction amounts
-            }
-            },
-            {
-            $lookup: {
-                from: "bankings",  // Assuming the collection where the user data is stored is called "users"
-                localField: "_id",  // Field from the aggregation to match on
-                foreignField: "_id",  // Field in the users collection to match on
-                as: "userDetails"  // Alias for the joined data
-            }
-            },
-            {
-            $unwind: "$userDetails"  // Unwind the userDetails array to flatten it
-            },
-            {
-            $project: {
-                _id: 1,  // Keep the _id field
-                name: "$userDetails.name",  // Include the name from userDetails
-                averageTransactionAmount: 1  // Include the averageTransactionAmount from the previous stage
-            }
-            }
-        ];
+        const userCursor = client.db("test").collection("bankings").aggregate(averageAmount);
+        const userCursor2 = client.db("test").collection("bankings").aggregate(averageCreditDebitAmount);
 
-        const userCursor = client.db("test").collection("bankings").aggregate(pipeline);
-
-        // await userCursor.forEach(user => {
-        //     console.log(`${user._id}: ${user.averageTransactionAmount}, ${user.name}`);
-        // });
+        // Fetch results from both cursors
+        const [users1, users2] = await Promise.all([
+            userCursor.toArray(),
+            userCursor2.toArray(),
+        ]);
 
         // Collect all results
         const results = [];
-        await userCursor.forEach(user => {
+
+        // Process both user arrays
+        users1.forEach(user1 => {
+            const matchingUser = users2.find(user2 => user2.name === user1.name);
             results.push({
-                _id: user._id,
-                name: user.name,
-                averageTransactionAmount: user.averageTransactionAmount
+                _id: user1._id,
+                name: user1.name,
+                averageTransactionAmount: user1.averageTransactionAmount,
+                creditAverage: matchingUser?.creditAverage || null,
+                debitAverage: matchingUser?.debitAverage || null,
             });
         });
+
+        // Add any users from users2 that aren't in users1
+        users2.forEach(user2 => {
+            if (!results.find(result => result.name=== user2.name)) {
+                results.push({
+                    _id: user2._id,
+                    name: null,
+                    averageTransactionAmount: null,
+                    creditAverage: user2.creditAverage,
+                    debitAverage: user2.debitAverage,
+                });
+            }
+        });
+
+        console.log(results)
 
         // Send the results as a JSON response
         res.status(200).json(results);
@@ -342,13 +426,6 @@ const getBoundedTransactions = async (req, res) => {
         await client.close();
     }
 };
-
-
-
-
-// Filters transactions by type (debit/credt)
-
-
 
 
 module.exports = {

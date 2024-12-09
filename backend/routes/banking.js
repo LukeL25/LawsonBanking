@@ -13,19 +13,19 @@ const {
 
 const router = express.Router()
 
-// GET all workouts
+// GET all accounts
 router.get('/', getAccounts)
 
-// GET a single workout
+// GET a single account
 router.get('/:id', getAccount)
 
-// POST a new workout
+// POST a new account
 router.post('/', createAccount)
 
-// DELETE a workout
+// DELETE a account
 router.delete('/:id', deleteAccount)
 
-// UPDATE a workout
+// UPDATE a account
 router.patch('/:id', updateAccount)
 
 // POST a new transaction
@@ -39,8 +39,6 @@ router.put('/:userId/transactions/:transactionId', updateTransaction);
 
 // Filter by transaction size
 router.get('/transactions/range/:userId', getBoundedTransactions);
-
-// Filter by transaction type (credit/debit)
 
 
 
