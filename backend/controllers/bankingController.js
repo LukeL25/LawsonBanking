@@ -9,7 +9,7 @@ const { MongoClient } = require('mongodb');
 const averageAmount = [
     {
         $unwind: {
-            path: "$transactions",  // Flatten the transactions array
+            path: "$transactions",
             preserveNullAndEmptyArrays: true
         }
         },
@@ -21,14 +21,14 @@ const averageAmount = [
         },
         {
         $lookup: {
-            from: "bankings",  // Assuming the collection where the user data is stored is called "users"
-            localField: "_id",  // Field from the aggregation to match on
-            foreignField: "_id",  // Field in the users collection to match on
-            as: "userDetails"  // Alias for the joined data
+            from: "bankings",  
+            localField: "_id", 
+            foreignField: "_id",
+            as: "userDetails"  
         }
         },
         {
-        $unwind: "$userDetails"  // Unwind the userDetails array to flatten it
+        $unwind: "$userDetails" 
         },
         {
         $project: {
@@ -43,7 +43,7 @@ const averageAmount = [
 const averageCreditDebitAmount = [
     {
         $unwind: {
-        path: "$transactions", // Flatten the transactions array
+        path: "$transactions",
         preserveNullAndEmptyArrays: true,
         },
     },
@@ -73,21 +73,21 @@ const averageCreditDebitAmount = [
     },
     {
         $lookup: {
-        from: "bankings", // Assuming user details are stored in "bankings"
-        localField: "_id", // Match the user ID
-        foreignField: "_id", // Match the ID in the "bankings" collection
-        as: "userDetails", // Alias for joined data
+        from: "bankings", 
+        localField: "_id",
+        foreignField: "_id",
+        as: "userDetails",
         },
     },
     {
-        $unwind: "$userDetails", // Flatten the userDetails array
+        $unwind: "$userDetails",
     },
     {
         $project: {
-        _id: 1, // Keep the user ID
-        name: "$userDetails.name", // Include the name from userDetails
-        creditAverage: 1, // Include the credit transaction average
-        debitAverage: 1, // Include the debit transaction average
+        _id: 1, 
+        name: "$userDetails.name",
+        creditAverage: 1,
+        debitAverage: 1,
         },
     },      
 ];
@@ -167,8 +167,6 @@ const numTransactions = [
 const getAccounts = async (req, res) => {
     console.log("here!")
     const accounts = await Banking.find({}).sort({createdAt: -1})
-
-
     res.status(200).json(accounts)
 }
 
@@ -383,26 +381,12 @@ const getBoundedTransactions = async (req, res) => {
 
         const userCursor = client.db("test").collection("bankings").aggregate(averageAmount);
         const userCursor2 = client.db("test").collection("bankings").aggregate(averageCreditDebitAmount);
-        //const userCursor3 = client.db("test").collection("bankings").aggregate(numTransactions);
-        
-        //console.log(userCursor3)
-        
-        // await userCursor.forEach(user => {
-        //     console.log(`${user._id}: ${user.averageTransactionAmount}, ${user.name}`);
-        // });
-
-        // await userCursor.forEach(user => {
-        //     console.log(`${user._id}: ${user.creditAverage}, ${user.debitAverage} ${user.name}`);
-        // });
 
         // Fetch results from both cursors
         const [users1, users2] = await Promise.all([
             userCursor.toArray(),
             userCursor2.toArray(),
         ]);
-
-
-        //console.log(userCursor3.result)
 
         // Collect all results
         const results = [];
@@ -442,13 +426,6 @@ const getBoundedTransactions = async (req, res) => {
         await client.close();
     }
 };
-
-
-
-
-// Filters transactions by type (debit/credt)
-
-
 
 
 module.exports = {
